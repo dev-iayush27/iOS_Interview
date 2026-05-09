@@ -528,7 +528,7 @@ They start with `@`.
 
 Example:
 
-```swift id="dfzw9l"
+```ruby
 @State private var count = 0
 ```
 
@@ -701,7 +701,7 @@ class UserViewModel: ObservableObject {
 
 #### View
 
-```swift id="y9v8kz"
+```ruby
 struct ContentView: View {
 
     @ObservedObject var vm = UserViewModel()
@@ -853,7 +853,7 @@ Used inside ObservableObject.
 
 #### Example
 
-```swift id="bnimhr"
+```ruby
 class CounterVM: ObservableObject {
 
     @Published var count = 0
@@ -1012,5 +1012,399 @@ TextField("Name", text: $name)
    ↓
 @EnvironmentObject
 ```
+
+---
+
+## 4. How to Integrate SwiftUI in UIKit Code and vice-versa?
+
+This is a VERY IMPORTANT real-world interview topic because most existing iOS apps are UIKit-based and companies gradually add SwiftUI screens into them.
+
+There are mainly 2 ways:
+
+| Integration Type     | Purpose     |
+| -------------------- | ----------- |
+| SwiftUI inside UIKit | Most common |
+| UIKit inside SwiftUI | Also common |
+
+---
+
+### SwiftUI Inside UIKit (MOST IMPORTANT)
+
+UIKit app can display SwiftUI view using:
+
+#### `UIHostingController`
+
+`UIHostingController` acts as a bridge between UIKit and SwiftUI.
+
+---
+
+#### Architecture
+
+```text
+UIKit ViewController
+        ↓
+UIHostingController
+        ↓
+SwiftUI View
+```
+
+---
+
+#### Example: Show SwiftUI Screen from UIKit
+
+---
+
+#### Step 1: Create SwiftUI View
+
+```ruby
+import SwiftUI
+
+struct ProfileView: View {
+
+    var body: some View {
+
+        VStack {
+            Text("SwiftUI Screen")
+                .font(.largeTitle)
+
+            Text("Integrated inside UIKit")
+        }
+    }
+}
+```
+
+---
+
+#### Step 2: Open in UIKit
+
+```ruby
+import UIKit
+import SwiftUI
+
+class ViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let swiftUIView = ProfileView()
+
+        let hostingController = UIHostingController(
+            rootView: swiftUIView
+        )
+
+        navigationController?.pushViewController(
+            hostingController,
+            animated: true
+        )
+    }
+}
+```
+
+---
+
+### What Happens Internally?
+
+```text
+UIKit Controller
+      ↓
+UIHostingController
+      ↓
+SwiftUI View Rendering
+```
+
+---
+
+#### 2. Add SwiftUI View as Child View in UIKit
+
+Instead of full screen navigation, you can embed SwiftUI inside a UIViewController.
+
+---
+
+#### Example
+
+```ruby
+import UIKit
+import SwiftUI
+
+class HomeViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let swiftUIView = ProfileView()
+
+        let hostingController = UIHostingController(
+            rootView: swiftUIView
+        )
+
+        addChild(hostingController)
+
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(hostingController.view)
+
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
+        hostingController.didMove(toParent: self)
+    }
+}
+```
+
+---
+
+#### Why Use This?
+
+Useful when:
+
+- Gradually migrating app to SwiftUI
+- Replacing small UIKit components
+- Embedding modern UI into legacy app
+
+---
+
+#### Pass Data from UIKit to SwiftUI
+
+You can pass values normally.
+
+---
+
+#### SwiftUI View
+
+```ruby
+struct UserView: View {
+
+    let username: String
+
+    var body: some View {
+        Text(username)
+    }
+}
+```
+
+---
+
+#### UIKit
+
+```ruby
+let swiftUIView = UserView(username: "Ayush")
+```
+
+---
+
+#### Pass ObservableObject to SwiftUI
+
+---
+
+#### ViewModel
+
+```ruby
+class UserViewModel: ObservableObject {
+
+    @Published var name = "Ayush"
+}
+```
+
+---
+
+#### SwiftUI View
+
+```ruby
+struct UserView: View {
+
+    @ObservedObject var vm: UserViewModel
+
+    var body: some View {
+        Text(vm.name)
+    }
+}
+```
+
+---
+
+#### UIKit
+
+```ruby
+let vm = UserViewModel()
+
+let swiftUIView = UserView(vm: vm)
+
+let hostingController = UIHostingController(
+    rootView: swiftUIView
+)
+```
+
+---
+
+#### UIKit Inside SwiftUI
+
+Sometimes existing UIKit components need to be reused in SwiftUI.
+
+Use:
+
+- `UIViewRepresentable`
+- `UIViewControllerRepresentable`
+
+---
+
+#### Example: UILabel in SwiftUI
+
+---
+
+#### Step 1
+
+```ruby
+import SwiftUI
+import UIKit
+
+struct CustomLabel: UIViewRepresentable {
+
+    func makeUIView(context: Context) -> UILabel {
+
+        let label = UILabel()
+        label.text = "UIKit Label"
+
+        return label
+    }
+
+    func updateUIView(
+        _ uiView: UILabel,
+        context: Context
+    ) {
+
+    }
+}
+```
+
+---
+
+#### Step 2
+
+Use inside SwiftUI:
+
+```ruby
+struct ContentView: View {
+
+    var body: some View {
+        CustomLabel()
+    }
+}
+```
+
+---
+
+#### UIViewControllerRepresentable
+
+Used for UIKit ViewControllers.
+
+---
+
+#### Example
+
+```ruby
+struct CameraView: UIViewControllerRepresentable {
+
+    func makeUIViewController(
+        context: Context
+    ) -> UIImagePickerController {
+
+        UIImagePickerController()
+    }
+
+    func updateUIViewController(
+        _ uiViewController: UIImagePickerController,
+        context: Context
+    ) {
+
+    }
+}
+```
+
+---
+
+### Communication Between UIKit and SwiftUI
+
+---
+
+#### UIKit → SwiftUI
+
+Pass:
+
+- Variables
+- Bindings
+- ObservableObjects
+
+---
+
+#### SwiftUI → UIKit
+
+Use:
+
+- Closures
+- Coordinators
+- Delegates
+
+---
+
+#### Example Using Closure
+
+---
+
+#### SwiftUI View
+
+```ruby
+struct LoginView: View {
+
+    var onLogin: (() -> Void)?
+
+    var body: some View {
+
+        Button("Login") {
+            onLogin?()
+        }
+    }
+}
+```
+
+---
+
+#### UIKit
+
+```ruby
+let view = LoginView {
+
+    print("Login tapped")
+}
+```
+
+---
+
+#### Coordinator Pattern
+
+Important for:
+
+- Delegates
+- Navigation
+- UIKit callbacks
+
+Mostly used in:
+
+- UIViewRepresentable
+- UIViewControllerRepresentable
+
+---
+
+#### Benefits of SwiftUI + UIKit Integration
+
+| Benefit             | Description               |
+| ------------------- | ------------------------- |
+| Gradual migration   | No need full rewrite      |
+| Reuse legacy code   | Saves effort              |
+| Modern UI adoption  | Use SwiftUI incrementally |
+| Hybrid architecture | Most companies use this   |
 
 ---
